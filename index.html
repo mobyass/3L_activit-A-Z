@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Date Alphabet</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>Activité de A à Z</h1>
+  </header>
+
+  <main>
+    <div class="grid" id="alphabet-grid"></div>
+
+    <section class="next-section">
+      <h2 class="next-title">Prochain à faire</h2>
+      <div class="next-card" id="next-card" role="button" tabindex="0">
+        <span class="next-empty">Appuie ici pour choisir une activité</span>
+      </div>
+    </section>
+
+    <div class="picker-backdrop" id="picker-backdrop">
+      <div class="picker-modal" id="picker-modal">
+        <div class="picker-header">
+          <span>Choisir une activité</span>
+          <button class="close-btn" id="close-picker">✕</button>
+        </div>
+        <div class="picker-body" id="picker-body"></div>
+      </div>
+    </div>
+
+    <aside class="panel" id="panel">
+      <div class="panel-header">
+        <span class="panel-letter" id="panel-letter">A</span>
+        <button class="close-btn" id="close-panel">✕</button>
+      </div>
+      <ul class="ideas-list" id="ideas-list"></ul>
+      <div class="add-idea">
+        <input type="text" id="new-idea-input" placeholder="Ajouter une idée…" />
+        <button id="add-idea-btn">+</button>
+      </div>
+    </aside>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
