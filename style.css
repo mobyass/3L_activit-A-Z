@@ -352,6 +352,175 @@ main {
   background: #fce7f3;
 }
 
+/* ── Camera button ── */
+.idea-cam {
+  background: none;
+  border: 1px solid #f9a8d4;
+  border-radius: 7px;
+  padding: 3px 7px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #a0648c;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.idea-cam:hover {
+  background: #fce7f3;
+  color: var(--rose-dk);
+}
+
+.idea-cam.has-photos {
+  background: #fce7f3;
+  border-color: var(--rose-dk);
+  color: var(--rose-dk);
+}
+
+.cam-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--rose-dk);
+  color: white;
+  border-radius: 20px;
+  padding: 1px 5px;
+  line-height: 1.4;
+}
+
+/* ── Photo modal ── */
+.photo-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-backdrop.open {
+  display: flex;
+}
+
+.photo-modal {
+  background: #fff;
+  border-radius: 18px;
+  width: min(520px, 94vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.photo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--rose-dk);
+  border-bottom: 1px solid #fce7f3;
+  gap: 1rem;
+}
+
+.photo-modal-header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.photo-thumb {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: var(--cream);
+  cursor: pointer;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s;
+}
+
+.photo-thumb:hover img {
+  transform: scale(1.04);
+}
+
+.photo-del {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0,0,0,0.55);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.photo-thumb:hover .photo-del {
+  opacity: 1;
+}
+
+.photo-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #c09ab5;
+  font-style: italic;
+  font-size: 0.9rem;
+  padding: 2rem 0;
+}
+
+.add-photo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem;
+  margin: 0 1rem 1rem;
+  border-radius: 12px;
+  border: 2px dashed #f9a8d4;
+  color: var(--rose-dk);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.add-photo-btn:hover {
+  background: #fff5f9;
+  border-color: var(--rose-dk);
+}
+
+#photo-input {
+  display: none;
+}
+
 /* ── Picker modal ── */
 .picker-backdrop {
   display: none;

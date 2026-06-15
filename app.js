@@ -65,6 +65,13 @@ const nextCard = document.getElementById('next-card');
 const pickerBackdrop = document.getElementById('picker-backdrop');
 const pickerBody = document.getElementById('picker-body');
 const closePicker = document.getElementById('close-picker');
+const photoBackdrop = document.getElementById('photo-backdrop');
+const photoGrid = document.getElementById('photo-grid');
+const photoModalTitle = document.getElementById('photo-modal-title');
+const photoInput = document.getElementById('photo-input');
+const closePhotoBtn = document.getElementById('close-photo');
+
+let photoContext = null;
 
 function createCard(letter) {
   const card = document.createElement('div');
@@ -129,6 +136,94 @@ function closePanel() {
     currentLetter = null;
   }
 }
+
+function resizeImage(file, maxSize = 900) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          if (width > height) { height = Math.round(height * maxSize / width); width = maxSize; }
+          else { width = Math.round(width * maxSize / height); height = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function openPhotoViewer(letter, idx) {
+  photoContext = { letter, idx };
+  photoModalTitle.textContent = state[letter].ideas[idx].text;
+  renderPhotoGrid();
+  photoBackdrop.classList.add('open');
+}
+
+function renderPhotoGrid() {
+  const { letter, idx } = photoContext;
+  const photos = state[letter].ideas[idx].photos || [];
+  photoGrid.innerHTML = '';
+
+  if (photos.length === 0) {
+    const msg = document.createElement('p');
+    msg.className = 'photo-empty';
+    msg.textContent = 'Aucune photo — ajoutes-en une !';
+    photoGrid.appendChild(msg);
+    return;
+  }
+
+  photos.forEach((src, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'photo-thumb';
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '';
+    img.addEventListener('click', () => window.open(src, '_blank'));
+
+    const del = document.createElement('button');
+    del.className = 'photo-del';
+    del.textContent = '✕';
+    del.addEventListener('click', e => {
+      e.stopPropagation();
+      state[letter].ideas[idx].photos.splice(i, 1);
+      saveState(state);
+      renderPhotoGrid();
+      renderIdeas();
+    });
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(del);
+    photoGrid.appendChild(wrapper);
+  });
+}
+
+photoInput.addEventListener('change', async e => {
+  if (!photoContext) return;
+  const { letter, idx } = photoContext;
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+
+  for (const file of files) {
+    const resized = await resizeImage(file);
+    if (!state[letter].ideas[idx].photos) state[letter].ideas[idx].photos = [];
+    state[letter].ideas[idx].photos.push(resized);
+  }
+  saveState(state);
+  renderPhotoGrid();
+  renderIdeas();
+  e.target.value = '';
+});
+
+closePhotoBtn.addEventListener('click', () => photoBackdrop.classList.remove('open'));
+photoBackdrop.addEventListener('click', e => { if (e.target === photoBackdrop) photoBackdrop.classList.remove('open'); });
 
 function openPicker() {
   pickerBody.innerHTML = '';
@@ -253,6 +348,17 @@ function renderIdeas() {
     textEl.className = 'idea-text' + (idea.checked ? ' checked' : '');
     textEl.textContent = idea.text;
 
+    const photoCount = idea.photos?.length || 0;
+    const camBtn = document.createElement('button');
+    camBtn.className = 'idea-cam' + (photoCount > 0 ? ' has-photos' : '');
+    camBtn.title = 'Photos';
+    if (photoCount > 0) {
+      camBtn.innerHTML = `📷 <span class="cam-count">${photoCount}</span>`;
+    } else {
+      camBtn.textContent = '📷';
+    }
+    camBtn.addEventListener('click', () => openPhotoViewer(currentLetter, idx));
+
     const delBtn = document.createElement('button');
     delBtn.className = 'idea-delete';
     delBtn.textContent = '✕';
@@ -270,6 +376,7 @@ function renderIdeas() {
 
     li.appendChild(checkbox);
     li.appendChild(textEl);
+    li.appendChild(camBtn);
     li.appendChild(delBtn);
     ideasList.appendChild(li);
   });
@@ -300,6 +407,7 @@ closeBtn.addEventListener('click', closePanel);
 overlay.addEventListener('click', closePanel);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    photoBackdrop.classList.remove('open');
     pickerBackdrop.classList.remove('open');
     closePanel();
   }
