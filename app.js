@@ -42,7 +42,7 @@ async function loadAll() {
   ALPHABET.forEach(l => state[l] = { ideas: [] });
   const ideaById = {};
   ideas.forEach(row => {
-    const idea = { id: row.id, text: row.text, checked: row.checked, photos: [] };
+    const idea = { id: row.id, text: row.text, checked: row.checked, caption: row.caption || '', photos: [] };
     ideaById[row.id] = idea;
     state[row.letter].ideas.push(idea);
   });
@@ -69,6 +69,10 @@ const closePicker = document.getElementById('close-picker');
 const photoBackdrop = document.getElementById('photo-backdrop');
 const photoGrid = document.getElementById('photo-grid');
 const photoModalTitle = document.getElementById('photo-modal-title');
+const captionBox = document.getElementById('caption-box');
+const captionText = document.getElementById('caption-text');
+const captionInput = document.getElementById('caption-input');
+const captionBtn = document.getElementById('caption-btn');
 const photoInput = document.getElementById('photo-input');
 const closePhotoBtn = document.getElementById('close-photo');
 
@@ -128,7 +132,6 @@ function openPanel(letter) {
   panel.classList.add('open');
   overlay.classList.add('visible');
   newIdeaInput.value = '';
-  newIdeaInput.focus();
 }
 
 function closePanel() {
@@ -162,53 +165,86 @@ function resizeImage(file, maxSize = 900) {
   });
 }
 
+function renderCaption() {
+  const idea = state[photoContext.letter].ideas[photoContext.idx];
+  captionBox.classList.remove('editing');
+  if (idea.caption) {
+    captionText.textContent = idea.caption;
+    captionText.classList.remove('empty');
+  } else {
+    captionText.textContent = 'Aucune légende';
+    captionText.classList.add('empty');
+  }
+  captionInput.value = idea.caption;
+  captionBtn.textContent = '✏️';
+}
+
 function openPhotoViewer(letter, idx) {
   photoContext = { letter, idx };
-  photoModalTitle.textContent = state[letter].ideas[idx].text;
+  const idea = state[letter].ideas[idx];
+  photoModalTitle.textContent = idea.text;
+  renderCaption();
   renderPhotoGrid();
   photoBackdrop.classList.add('open');
 }
 
+captionBtn.addEventListener('click', async () => {
+  if (!photoContext) return;
+  const idea = state[photoContext.letter].ideas[photoContext.idx];
+
+  if (!captionBox.classList.contains('editing')) {
+    captionBox.classList.add('editing');
+    captionBtn.textContent = '✓';
+    captionInput.value = idea.caption;
+    captionInput.focus();
+  } else {
+    idea.caption = captionInput.value.trim();
+    await supabaseClient.from('ideas').update({ caption: idea.caption }).eq('id', idea.id);
+    renderCaption();
+  }
+});
+
+captionInput.addEventListener('keydown', e => { if (e.key === 'Enter') captionBtn.click(); });
+
 function renderPhotoGrid() {
   const { letter, idx } = photoContext;
-  const photos = state[letter].ideas[idx].photos;
+  const idea = state[letter].ideas[idx];
   photoGrid.innerHTML = '';
 
-  if (photos.length === 0) {
+  if (idea.photos.length === 0) {
     const msg = document.createElement('p');
     msg.className = 'photo-empty';
     msg.textContent = 'Aucune photo — ajoutes-en une !';
     photoGrid.appendChild(msg);
-    return;
-  }
+  } else {
+    idea.photos.forEach(photo => {
+      const url = photoUrl(photo.path);
 
-  photos.forEach(photo => {
-    const url = photoUrl(photo.path);
-    const wrapper = document.createElement('div');
-    wrapper.className = 'photo-thumb';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'photo-thumb';
 
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = '';
-    img.addEventListener('click', () => window.open(url, '_blank'));
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.addEventListener('click', () => window.open(url, '_blank'));
 
-    const del = document.createElement('button');
-    del.className = 'photo-del';
-    del.textContent = '✕';
-    del.addEventListener('click', async e => {
-      e.stopPropagation();
-      await supabaseClient.storage.from(PHOTOS_BUCKET).remove([photo.path]);
-      await supabaseClient.from('photos').delete().eq('id', photo.id);
-      const idea = state[letter].ideas[idx];
-      idea.photos = idea.photos.filter(p => p.id !== photo.id);
-      renderPhotoGrid();
-      renderIdeas();
+      const del = document.createElement('button');
+      del.className = 'photo-del';
+      del.textContent = '✕';
+      del.addEventListener('click', async e => {
+        e.stopPropagation();
+        await supabaseClient.storage.from(PHOTOS_BUCKET).remove([photo.path]);
+        await supabaseClient.from('photos').delete().eq('id', photo.id);
+        idea.photos = idea.photos.filter(p => p.id !== photo.id);
+        renderPhotoGrid();
+        renderIdeas();
+      });
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(del);
+      photoGrid.appendChild(wrapper);
     });
-
-    wrapper.appendChild(img);
-    wrapper.appendChild(del);
-    photoGrid.appendChild(wrapper);
-  });
+  }
 }
 
 photoInput.addEventListener('change', async e => {
@@ -225,7 +261,7 @@ photoInput.addEventListener('change', async e => {
     if (upErr) { console.error(upErr); continue; }
     const { data: row, error: insErr } = await supabaseClient.from('photos').insert({ idea_id: idea.id, path }).select().single();
     if (insErr) { console.error(insErr); continue; }
-    idea.photos.push({ id: row.id, path: row.path });
+    idea.photos.push({ id: row.id, path: row.path, caption: '' });
   }
   renderPhotoGrid();
   renderIdeas();
@@ -402,7 +438,7 @@ async function addIdea() {
   newIdeaInput.value = '';
   const { data, error } = await supabaseClient.from('ideas').insert({ letter: currentLetter, text }).select().single();
   if (error) { console.error(error); return; }
-  state[currentLetter].ideas.push({ id: data.id, text: data.text, checked: data.checked, photos: [] });
+  state[currentLetter].ideas.push({ id: data.id, text: data.text, checked: data.checked, caption: '', photos: [] });
   renderIdeas();
   updateCard(currentLetter);
   newIdeaInput.focus();

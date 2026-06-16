@@ -8,6 +8,16 @@
 </head>
 <body>
 
+  <div class="lock-screen" id="lock-screen">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <h2>Accès protégé</h2>
+      <input type="password" id="lock-input" inputmode="numeric" placeholder="Code d'accès" autocomplete="off" />
+      <button id="lock-submit">Valider</button>
+      <p class="lock-error" id="lock-error">Code incorrect</p>
+    </div>
+  </div>
+
   <header>
     <h1>Date de A à Z</h1>
   </header>
@@ -53,6 +63,11 @@
         <span id="photo-modal-title"></span>
         <button class="close-btn" id="close-photo">✕</button>
       </div>
+      <div class="caption-box" id="caption-box">
+        <span class="caption-text" id="caption-text"></span>
+        <input type="text" class="caption-input" id="caption-input" placeholder="Légende de l'activité…" />
+        <button class="caption-btn" id="caption-btn">✏️</button>
+      </div>
       <div class="photo-grid" id="photo-grid"></div>
       <label class="add-photo-btn">
         <input type="file" id="photo-input" accept="image/*" multiple />
@@ -60,6 +75,35 @@
       </label>
     </div>
   </div>
+
+  <script>
+    (function () {
+      const ACCESS_CODE = '200426';
+      const LOCK_KEY = 'date-alphabet-unlocked';
+      const screen = document.getElementById('lock-screen');
+      const input = document.getElementById('lock-input');
+      const error = document.getElementById('lock-error');
+      const submit = document.getElementById('lock-submit');
+
+      if (localStorage.getItem(LOCK_KEY) === 'true') {
+        screen.style.display = 'none';
+      }
+
+      function tryUnlock() {
+        if (input.value.trim() === ACCESS_CODE) {
+          localStorage.setItem(LOCK_KEY, 'true');
+          screen.style.display = 'none';
+        } else {
+          error.style.display = 'block';
+          input.value = '';
+          input.focus();
+        }
+      }
+
+      submit.addEventListener('click', tryUnlock);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+    })();
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
