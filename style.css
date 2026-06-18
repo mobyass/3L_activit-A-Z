@@ -670,6 +670,93 @@ main {
   padding: 2rem 0;
 }
 
+/* ── Confirm dialog ── */
+.confirm-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.confirm-backdrop.open {
+  display: flex;
+}
+
+.confirm-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.8rem 1.6rem 1.4rem;
+  width: min(310px, 100%);
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.confirm-msg {
+  font-size: 0.98rem;
+  color: #1e1e2e;
+  margin-bottom: 1.4rem;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-cancel {
+  flex: 1;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: 2px solid #fce7f3;
+  background: none;
+  color: #9d4f74;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirm-cancel:hover {
+  background: #fce7f3;
+}
+
+.confirm-ok {
+  flex: 1;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: none;
+  background: #dc2626;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirm-ok:hover {
+  background: #b91c1c;
+}
+
+/* ── Caption saved flash ── */
+.caption-saved {
+  font-size: 0.78rem;
+  color: #10b981;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+  flex-shrink: 0;
+}
+
+.caption-saved.show {
+  opacity: 1;
+}
+
 /* ── Lock screen ── */
 .lock-screen {
   position: fixed;

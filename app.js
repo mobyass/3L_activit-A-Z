@@ -72,7 +72,28 @@ const photoModalTitle = document.getElementById('photo-modal-title');
 const captionBox = document.getElementById('caption-box');
 const captionText = document.getElementById('caption-text');
 const captionInput = document.getElementById('caption-input');
+const captionSaved = document.getElementById('caption-saved');
 const captionBtn = document.getElementById('caption-btn');
+const confirmBackdrop = document.getElementById('confirm-backdrop');
+const confirmMsg = document.getElementById('confirm-msg');
+const confirmOk = document.getElementById('confirm-ok');
+const confirmCancel = document.getElementById('confirm-cancel');
+
+function confirmDialog(message) {
+  return new Promise(resolve => {
+    confirmMsg.textContent = message;
+    confirmBackdrop.classList.add('open');
+    function ok()     { cleanup(); resolve(true); }
+    function cancel() { cleanup(); resolve(false); }
+    function cleanup() {
+      confirmBackdrop.classList.remove('open');
+      confirmOk.removeEventListener('click', ok);
+      confirmCancel.removeEventListener('click', cancel);
+    }
+    confirmOk.addEventListener('click', ok);
+    confirmCancel.addEventListener('click', cancel);
+  });
+}
 const photoInput = document.getElementById('photo-input');
 const closePhotoBtn = document.getElementById('close-photo');
 
@@ -201,6 +222,8 @@ captionBtn.addEventListener('click', async () => {
     idea.caption = captionInput.value.trim();
     await supabaseClient.from('ideas').update({ caption: idea.caption }).eq('id', idea.id);
     renderCaption();
+    captionSaved.classList.add('show');
+    setTimeout(() => captionSaved.classList.remove('show'), 2000);
   }
 });
 
@@ -233,6 +256,8 @@ function renderPhotoGrid() {
       del.textContent = '✕';
       del.addEventListener('click', async e => {
         e.stopPropagation();
+        const ok = await confirmDialog('Supprimer cette photo ?');
+        if (!ok) return;
         await supabaseClient.storage.from(PHOTOS_BUCKET).remove([photo.path]);
         await supabaseClient.from('photos').delete().eq('id', photo.id);
         idea.photos = idea.photos.filter(p => p.id !== photo.id);
@@ -411,6 +436,8 @@ function renderIdeas() {
     delBtn.textContent = '✕';
     delBtn.title = 'Supprimer';
     delBtn.addEventListener('click', async () => {
+      const ok = await confirmDialog(`Supprimer "${idea.text}" ?`);
+      if (!ok) return;
       const paths = idea.photos.map(p => p.path);
       if (paths.length) await supabaseClient.storage.from(PHOTOS_BUCKET).remove(paths);
       await supabaseClient.from('ideas').delete().eq('id', idea.id);

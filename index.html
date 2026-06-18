@@ -66,6 +66,7 @@
       <div class="caption-box" id="caption-box">
         <span class="caption-text" id="caption-text"></span>
         <input type="text" class="caption-input" id="caption-input" placeholder="Légende de l'activité…" />
+        <span class="caption-saved" id="caption-saved">✓ Enregistré</span>
         <button class="caption-btn" id="caption-btn">✏️</button>
       </div>
       <div class="photo-grid" id="photo-grid"></div>
@@ -76,22 +77,26 @@
     </div>
   </div>
 
+  <div class="confirm-backdrop" id="confirm-backdrop">
+    <div class="confirm-card">
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" id="confirm-cancel">Annuler</button>
+        <button class="confirm-ok" id="confirm-ok">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       const ACCESS_CODE = '200426';
-      const LOCK_KEY = 'date-alphabet-unlocked';
       const screen = document.getElementById('lock-screen');
       const input = document.getElementById('lock-input');
       const error = document.getElementById('lock-error');
       const submit = document.getElementById('lock-submit');
 
-      if (localStorage.getItem(LOCK_KEY) === 'true') {
-        screen.style.display = 'none';
-      }
-
       function tryUnlock() {
         if (input.value.trim() === ACCESS_CODE) {
-          localStorage.setItem(LOCK_KEY, 'true');
           screen.style.display = 'none';
         } else {
           error.style.display = 'block';
