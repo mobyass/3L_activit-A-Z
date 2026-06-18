@@ -20,6 +20,7 @@
 
   <header>
     <h1>Date de A à Z</h1>
+    <button class="history-btn" id="history-btn">📅 Activités réalisées</button>
   </header>
 
   <main>
@@ -63,17 +64,21 @@
         <span id="photo-modal-title"></span>
         <button class="close-btn" id="close-photo">✕</button>
       </div>
-      <div class="caption-box" id="caption-box">
-        <span class="caption-text" id="caption-text"></span>
-        <input type="text" class="caption-input" id="caption-input" placeholder="Légende de l'activité…" />
-        <span class="caption-saved" id="caption-saved">✓ Enregistré</span>
-        <button class="caption-btn" id="caption-btn">✏️</button>
-      </div>
       <div class="photo-grid" id="photo-grid"></div>
       <label class="add-photo-btn">
         <input type="file" id="photo-input" accept="image/*" multiple />
         + Ajouter des photos
       </label>
+    </div>
+  </div>
+
+  <div class="history-backdrop" id="history-backdrop">
+    <div class="history-modal">
+      <div class="picker-header">
+        <span>Activités réalisées</span>
+        <button class="close-btn" id="close-history">✕</button>
+      </div>
+      <div class="history-body" id="history-body"></div>
     </div>
   </div>
 

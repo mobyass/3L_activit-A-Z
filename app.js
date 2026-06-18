@@ -14,6 +14,58 @@ let nextIdeaId = null;
 let currentLetter = null;
 let photoContext = null; // { letter, idx }
 
+function openHistory() {
+  historyBody.innerHTML = '';
+
+  const done = [];
+  for (const l of ALPHABET) {
+    for (const idea of state[l].ideas) {
+      if (idea.checked && idea.done_at) {
+        done.push({ letter: l, text: idea.text, done_at: idea.done_at });
+      }
+    }
+  }
+
+  if (done.length === 0) {
+    const msg = document.createElement('p');
+    msg.className = 'history-empty';
+    msg.textContent = 'Aucune activité réalisée pour le moment.';
+    historyBody.appendChild(msg);
+  } else {
+    done.sort((a, b) => b.done_at.localeCompare(a.done_at));
+
+    let lastDate = null;
+    done.forEach(({ letter, text, done_at }) => {
+      if (done_at !== lastDate) {
+        lastDate = done_at;
+        const group = document.createElement('div');
+        group.className = 'history-date-group';
+        const label = document.createElement('div');
+        label.className = 'history-date-label';
+        label.textContent = formatDate(done_at);
+        group.appendChild(label);
+        historyBody.appendChild(group);
+      }
+
+      const item = document.createElement('div');
+      item.className = 'history-item';
+
+      const badge = document.createElement('span');
+      badge.className = 'picker-letter-badge';
+      badge.textContent = letter;
+
+      const name = document.createElement('span');
+      name.textContent = text;
+
+      item.appendChild(badge);
+      item.appendChild(name);
+      historyBody.lastElementChild.appendChild(item);
+    });
+  }
+
+  historyBackdrop.classList.add('open');
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -75,11 +127,10 @@ const closePicker = document.getElementById('close-picker');
 const photoBackdrop = document.getElementById('photo-backdrop');
 const photoGrid = document.getElementById('photo-grid');
 const photoModalTitle = document.getElementById('photo-modal-title');
-const captionBox = document.getElementById('caption-box');
-const captionText = document.getElementById('caption-text');
-const captionInput = document.getElementById('caption-input');
-const captionSaved = document.getElementById('caption-saved');
-const captionBtn = document.getElementById('caption-btn');
+const historyBackdrop = document.getElementById('history-backdrop');
+const historyBody = document.getElementById('history-body');
+const historyBtn = document.getElementById('history-btn');
+const closeHistory = document.getElementById('close-history');
 const dateBackdrop = document.getElementById('date-backdrop');
 const dateInput = document.getElementById('date-input');
 const dateOk = document.getElementById('date-ok');
@@ -212,48 +263,12 @@ function resizeImage(file, maxSize = 900) {
   });
 }
 
-function renderCaption() {
-  const idea = state[photoContext.letter].ideas[photoContext.idx];
-  captionBox.classList.remove('editing');
-  if (idea.caption) {
-    captionText.textContent = idea.caption;
-    captionText.classList.remove('empty');
-  } else {
-    captionText.textContent = 'Aucune légende';
-    captionText.classList.add('empty');
-  }
-  captionInput.value = idea.caption;
-  captionBtn.textContent = '✏️';
-}
-
 function openPhotoViewer(letter, idx) {
   photoContext = { letter, idx };
-  const idea = state[letter].ideas[idx];
-  photoModalTitle.textContent = idea.text;
-  renderCaption();
+  photoModalTitle.textContent = state[letter].ideas[idx].text;
   renderPhotoGrid();
   photoBackdrop.classList.add('open');
 }
-
-captionBtn.addEventListener('click', async () => {
-  if (!photoContext) return;
-  const idea = state[photoContext.letter].ideas[photoContext.idx];
-
-  if (!captionBox.classList.contains('editing')) {
-    captionBox.classList.add('editing');
-    captionBtn.textContent = '✓';
-    captionInput.value = idea.caption;
-    captionInput.focus();
-  } else {
-    idea.caption = captionInput.value.trim();
-    await supabaseClient.from('ideas').update({ caption: idea.caption }).eq('id', idea.id);
-    renderCaption();
-    captionSaved.classList.add('show');
-    setTimeout(() => captionSaved.classList.remove('show'), 2000);
-  }
-});
-
-captionInput.addEventListener('keydown', e => { if (e.key === 'Enter') captionBtn.click(); });
 
 function renderPhotoGrid() {
   const { letter, idx } = photoContext;
@@ -527,6 +542,10 @@ async function addIdea() {
 addIdeaBtn.addEventListener('click', addIdea);
 newIdeaInput.addEventListener('keydown', e => { if (e.key === 'Enter') addIdea(); });
 
+historyBtn.addEventListener('click', openHistory);
+closeHistory.addEventListener('click', () => historyBackdrop.classList.remove('open'));
+historyBackdrop.addEventListener('click', e => { if (e.target === historyBackdrop) historyBackdrop.classList.remove('open'); });
+
 nextCard.addEventListener('click', openPicker);
 nextCard.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openPicker(); });
 closePicker.addEventListener('click', () => pickerBackdrop.classList.remove('open'));
@@ -536,6 +555,7 @@ closeBtn.addEventListener('click', closePanel);
 overlay.addEventListener('click', closePanel);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    historyBackdrop.classList.remove('open');
     photoBackdrop.classList.remove('open');
     pickerBackdrop.classList.remove('open');
     closePanel();
