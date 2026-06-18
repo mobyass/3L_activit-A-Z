@@ -14,6 +14,12 @@ let nextIdeaId = null;
 let currentLetter = null;
 let photoContext = null; // { letter, idx }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 function photoUrl(path) {
   return supabaseClient.storage.from(PHOTOS_BUCKET).getPublicUrl(path).data.publicUrl;
 }
@@ -42,7 +48,7 @@ async function loadAll() {
   ALPHABET.forEach(l => state[l] = { ideas: [] });
   const ideaById = {};
   ideas.forEach(row => {
-    const idea = { id: row.id, text: row.text, checked: row.checked, caption: row.caption || '', photos: [] };
+    const idea = { id: row.id, text: row.text, checked: row.checked, done_at: row.done_at || null, caption: row.caption || '', photos: [] };
     ideaById[row.id] = idea;
     state[row.letter].ideas.push(idea);
   });
@@ -74,10 +80,30 @@ const captionText = document.getElementById('caption-text');
 const captionInput = document.getElementById('caption-input');
 const captionSaved = document.getElementById('caption-saved');
 const captionBtn = document.getElementById('caption-btn');
+const dateBackdrop = document.getElementById('date-backdrop');
+const dateInput = document.getElementById('date-input');
+const dateOk = document.getElementById('date-ok');
+const dateCancel = document.getElementById('date-cancel');
 const confirmBackdrop = document.getElementById('confirm-backdrop');
 const confirmMsg = document.getElementById('confirm-msg');
 const confirmOk = document.getElementById('confirm-ok');
 const confirmCancel = document.getElementById('confirm-cancel');
+
+function dateDialog() {
+  return new Promise(resolve => {
+    dateInput.value = new Date().toISOString().slice(0, 10);
+    dateBackdrop.classList.add('open');
+    function ok()     { cleanup(); resolve(dateInput.value || null); }
+    function cancel() { cleanup(); resolve(null); }
+    function cleanup() {
+      dateBackdrop.classList.remove('open');
+      dateOk.removeEventListener('click', ok);
+      dateCancel.removeEventListener('click', cancel);
+    }
+    dateOk.addEventListener('click', ok);
+    dateCancel.addEventListener('click', cancel);
+  });
+}
 
 function confirmDialog(message) {
   return new Promise(resolve => {
@@ -410,15 +436,40 @@ function renderIdeas() {
     checkbox.className = 'idea-check';
     checkbox.checked = idea.checked;
     checkbox.addEventListener('change', async () => {
-      idea.checked = checkbox.checked;
-      textEl.classList.toggle('checked', checkbox.checked);
-      updateCard(currentLetter);
-      await supabaseClient.from('ideas').update({ checked: idea.checked }).eq('id', idea.id);
+      if (checkbox.checked) {
+        checkbox.checked = false;
+        const date = await dateDialog();
+        if (!date) return;
+        idea.checked = true;
+        idea.done_at = date;
+        checkbox.checked = true;
+        textEl.classList.add('checked');
+        dateBadge.textContent = formatDate(date);
+        dateBadge.style.display = 'inline';
+        updateCard(currentLetter);
+        await supabaseClient.from('ideas').update({ checked: true, done_at: date }).eq('id', idea.id);
+      } else {
+        checkbox.checked = true;
+        const ok = await confirmDialog(`Retirer "${idea.text}" et effacer la date du ${formatDate(idea.done_at)} ?`);
+        if (!ok) return;
+        idea.checked = false;
+        idea.done_at = null;
+        checkbox.checked = false;
+        textEl.classList.remove('checked');
+        dateBadge.style.display = 'none';
+        updateCard(currentLetter);
+        await supabaseClient.from('ideas').update({ checked: false, done_at: null }).eq('id', idea.id);
+      }
     });
 
     const textEl = document.createElement('span');
     textEl.className = 'idea-text' + (idea.checked ? ' checked' : '');
     textEl.textContent = idea.text;
+
+    const dateBadge = document.createElement('span');
+    dateBadge.className = 'idea-date';
+    dateBadge.textContent = idea.done_at ? formatDate(idea.done_at) : '';
+    dateBadge.style.display = idea.done_at ? 'inline' : 'none';
 
     const photoCount = idea.photos.length;
     const camBtn = document.createElement('button');
@@ -453,6 +504,7 @@ function renderIdeas() {
 
     li.appendChild(checkbox);
     li.appendChild(textEl);
+    li.appendChild(dateBadge);
     li.appendChild(camBtn);
     li.appendChild(delBtn);
     ideasList.appendChild(li);
@@ -465,7 +517,7 @@ async function addIdea() {
   newIdeaInput.value = '';
   const { data, error } = await supabaseClient.from('ideas').insert({ letter: currentLetter, text }).select().single();
   if (error) { console.error(error); return; }
-  state[currentLetter].ideas.push({ id: data.id, text: data.text, checked: data.checked, caption: '', photos: [] });
+  state[currentLetter].ideas.push({ id: data.id, text: data.text, checked: data.checked, done_at: null, caption: '', photos: [] });
   renderIdeas();
   updateCard(currentLetter);
   newIdeaInput.focus();

@@ -5,6 +5,7 @@ create table if not exists ideas (
   letter text not null check (letter ~ '^[A-Z]$'),
   text text not null,
   checked boolean not null default false,
+  done_at date,
   caption text,
   created_at timestamptz not null default now()
 );
