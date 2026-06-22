@@ -531,6 +531,76 @@ main {
 }
 
 
+.caption-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 1rem 1rem;
+}
+
+.caption-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #1e1e2e;
+  font-style: italic;
+}
+
+.caption-text.empty {
+  color: #c09ab5;
+}
+
+.caption-input {
+  flex: 1;
+  display: none;
+  border: 2px solid #fce7f3;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.caption-input:focus {
+  border-color: var(--rose);
+}
+
+.caption-box.editing .caption-text {
+  display: none;
+}
+
+.caption-box.editing .caption-input {
+  display: block;
+}
+
+.caption-btn {
+  background: none;
+  border: 1px solid #f9a8d4;
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.caption-btn:hover {
+  background: #fce7f3;
+}
+
+.caption-saved {
+  font-size: 0.78rem;
+  color: #10b981;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+  flex-shrink: 0;
+}
+
+.caption-saved.show {
+  opacity: 1;
+}
+
 .photo-thumb {
   position: relative;
   border-radius: 10px;
